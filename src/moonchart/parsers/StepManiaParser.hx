@@ -219,9 +219,11 @@ class BasicStepManiaParser<T:StepManiaFormat> extends BasicParser<T>
 			var noteRows = data.split("\n");
 			for (row in noteRows)
 			{
-				var step:StepManiaStep = row.replace("\n", "").trim().split("");
-				if (step.length > 0)
+				row = row.replace("\n", "").trim();
+				if (row.length > 0) {
+					var step:StepManiaStep = row.split("");
 					measure.push(step);
+				}
 			}
 
 			mapData.notes.push(measure);
