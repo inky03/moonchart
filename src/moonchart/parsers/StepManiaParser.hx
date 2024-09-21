@@ -189,6 +189,8 @@ class BasicStepManiaParser<T:StepManiaFormat> extends BasicParser<T>
 	{
 		switch (title)
 		{
+			case 'OFFSET':
+				formatted.OFFSET = Std.parseFloat(value);
 			case 'NOTES':
 				currentMapData = getDefaultMap();
 				parseMap(title, value, formatted, currentMapData);
@@ -221,7 +223,7 @@ class BasicStepManiaParser<T:StepManiaFormat> extends BasicParser<T>
 			{
 				row = row.replace("\n", "").trim();
 				if (row.length > 0) {
-					var step:StepManiaStep = row.split("");
+					final step:StepManiaStep = row.split("");
 					measure.push(step);
 				}
 			}
