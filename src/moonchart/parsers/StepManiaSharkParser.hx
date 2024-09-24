@@ -31,12 +31,20 @@ typedef SSCLabel =
 	label:String
 }
 
+typedef SSCTimeSignature =
+{
+	beat:Float,
+	numerator:Int,
+	denominator:Int
+}
+
 typedef SSCFormat = StepManiaFormat &
 {
 	STOPS:Array<SSCStop>,
 	DELAYS:Array<SSCDelay>,
 	WARPS:Array<SSCWarp>,
-	LABELS:Array<SSCLabel>
+	LABELS:Array<SSCLabel>,
+	TIMESIGNATURES:Array<SSCTimeSignature>
 }
 
 /**
@@ -52,6 +60,7 @@ class StepManiaSharkParser extends BasicStepManiaParser<SSCFormat>
 			TITLE: "Unknown",
 			ARTIST: "Unknown",
 			OFFSET: 0,
+			TIMESIGNATURES: [],
 			BPMS: [],
 			STOPS: [],
 			DELAYS: [],
@@ -105,6 +114,19 @@ class StepManiaSharkParser extends BasicStepManiaParser<SSCFormat>
 			case 'NOTEDATA': // No longer reading song data! Start reading map data!!
 				parseState = MAP_INFO;
 				currentMapData = getDefaultMap();
+			case 'TIMESIGNATURES':
+				var data = value.split(",");
+				for (timesig_data in data)
+				{
+					var workable_data:Array<String> = timesig_data.trim().replace("\n", "").split("="); // beat=numerator=denominator
+					if (workable_data.length < 2)
+						continue;
+					formatted.TIMESIGNATURES.push({
+						beat: Std.parseFloat(workable_data[0]),
+						numerator: Std.parseInt(workable_data[1]),
+						denominator: Std.parseInt(workable_data[2])
+					});
+				}
 			case 'WARPS':
 				var data = value.split(",");
 				for (warp_data in data)

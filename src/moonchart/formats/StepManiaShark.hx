@@ -76,6 +76,94 @@ class StepManiaShark extends StepManiaBasic<SSCFormat>
 		return events;
 	}
 
+	override function getChartMeta():BasicMetaData // sobbing uncontrollably
+	{
+		var bpmChanges:Array<BasicBPMChange> = [];
+
+		var time:Float = 0;
+		var lastBeat:Float = 0;
+		var lastBPM:Float = data.BPMS[0].bpm;
+		var lastDenominator:Int = 4;
+
+		var timeSignatures:Array<SSCTimeSignature> = data.TIMESIGNATURES; // absolutely deranged
+		var activeSignature:SSCTimeSignature = null;
+		var nextSignature:Int = 0;
+		if (timeSignatures.length > 0 && timeSignatures[0].beat == 0) {
+			activeSignature = timeSignatures[0];
+			nextSignature ++;
+		}
+
+		bpmChanges.push({
+			time: 0,
+			bpm: lastBPM,
+			beatsPerMeasure: activeSignature?.numerator ?? 4,
+			stepsPerBeat: activeSignature?.denominator ?? 4
+		});
+
+		// Convert the bpm changes from beats to milliseconds
+		for (i in 1...data.BPMS.length)
+		{
+			var change = data.BPMS[i];
+			while (nextSignature < timeSignatures.length && change.beat >= timeSignatures[nextSignature].beat) {
+				activeSignature = timeSignatures[nextSignature];
+				time += ((activeSignature.beat - lastBeat) / lastBPM) * 60000 * (4 / lastDenominator);
+				lastDenominator = activeSignature.denominator;
+				if (change.beat > activeSignature.beat) {
+					bpmChanges.push({
+						time: time,
+						bpm: lastBPM,
+						beatsPerMeasure: activeSignature.numerator,
+						stepsPerBeat: activeSignature.denominator
+					});
+				}
+				lastBeat = activeSignature.beat;
+				nextSignature ++;
+			}
+			time += ((change.beat - lastBeat) / lastBPM) * 60000 * (4 / lastDenominator);
+
+			lastBeat = change.beat;
+			lastBPM = change.bpm;
+
+			bpmChanges.push({
+				time: time,
+				bpm: lastBPM,
+				beatsPerMeasure: activeSignature?.numerator ?? 4,
+				stepsPerBeat: activeSignature?.denominator ?? 4
+			});
+		}
+		if (nextSignature < timeSignatures.length) {
+			for (i in nextSignature...timeSignatures.length) {
+				var change = timeSignatures[i];
+				time += ((change.beat - lastBeat) / lastBPM) * 60000 * (4 / lastDenominator);
+
+				lastDenominator = change.denominator;
+				lastBeat = change.beat;
+
+				bpmChanges.push({
+					time: time,
+					bpm: lastBPM,
+					beatsPerMeasure: change.numerator,
+					stepsPerBeat: change.denominator
+				});
+			}
+		}
+
+		bpmChanges = Timing.sortBPMChanges(bpmChanges);
+
+		// TODO: this may have to apply for bpm changes too, change scroll speed event?
+		final speed:Float = bpmChanges[0].bpm * StepMania.STEPMANIA_SCROLL_SPEED;
+		final offset:Float = data.OFFSET is String ? Std.parseFloat(cast data.OFFSET) : data.OFFSET;
+		final isSingle:Bool = Util.mapFirst(data.NOTES).dance == SINGLE;
+
+		return {
+			title: data.TITLE,
+			bpmChanges: bpmChanges,
+			offset: offset * 1000,
+			scrollSpeeds: Util.fillMap(diffs, speed),
+			extraData: [SONG_ARTIST => data.ARTIST, LANES_LENGTH => isSingle ? 4 : 8]
+		}
+	}
+
 	override public function fromFile(path:String, ?meta:String, ?diff:FormatDifficulty):StepManiaShark
 	{
 		return fromStepManiaShark(Util.getText(path), diff);
