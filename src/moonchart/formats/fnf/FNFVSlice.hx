@@ -387,10 +387,12 @@ class FNFVSlice extends BasicFormat<FNFVSliceFormat, FNFVSliceMeta>
 			bpmChanges.push({
 				time: Math.max(change.t, 0), // Just making sure they all start at 0 lol
 				bpm: change.bpm,
-				beatsPerMeasure: 4,
-				stepsPerBeat: 4
+				beatsPerMeasure: change.n,
+				stepsPerBeat: change.d
 			});
 		}
+
+		bpmChanges = Timing.sortBPMChanges(bpmChanges);
 
 		var chars = meta.playData.characters;
 

@@ -84,20 +84,21 @@ class StepManiaShark extends StepManiaBasic<SSCFormat>
 		var lastBeat:Float = 0;
 		var lastBPM:Float = data.BPMS[0].bpm;
 		var lastDenominator:Int = 4;
+		var lastNumerator:Int = 4;
 
 		var timeSignatures:Array<SSCTimeSignature> = data.TIMESIGNATURES; // absolutely deranged
-		var activeSignature:SSCTimeSignature = null;
 		var nextSignature:Int = 0;
 		if (timeSignatures.length > 0 && timeSignatures[0].beat == 0) {
-			activeSignature = timeSignatures[0];
+			lastDenominator = timeSignatures[0].denominator;
+			lastNumerator = timeSignatures[0].numerator;
 			nextSignature ++;
 		}
 
 		bpmChanges.push({
 			time: 0,
 			bpm: lastBPM,
-			beatsPerMeasure: activeSignature?.numerator ?? 4,
-			stepsPerBeat: activeSignature?.denominator ?? 4
+			beatsPerMeasure: lastNumerator,
+			stepsPerBeat: lastDenominator
 		});
 
 		// Convert the bpm changes from beats to milliseconds
@@ -105,18 +106,19 @@ class StepManiaShark extends StepManiaBasic<SSCFormat>
 		{
 			var change = data.BPMS[i];
 			while (nextSignature < timeSignatures.length && change.beat >= timeSignatures[nextSignature].beat) {
-				activeSignature = timeSignatures[nextSignature];
-				time += ((activeSignature.beat - lastBeat) / lastBPM) * 60000 * (4 / lastDenominator);
-				lastDenominator = activeSignature.denominator;
-				if (change.beat > activeSignature.beat) {
+				final curSignature:SSCTimeSignature = timeSignatures[nextSignature];
+				time += ((curSignature.beat - lastBeat) / lastBPM) * 60000 * (4 / lastDenominator);
+				lastDenominator = curSignature.denominator;
+				lastNumerator = curSignature.numerator;
+				if (change.beat > curSignature.beat) {
 					bpmChanges.push({
 						time: time,
 						bpm: lastBPM,
-						beatsPerMeasure: activeSignature.numerator,
-						stepsPerBeat: activeSignature.denominator
+						beatsPerMeasure: lastNumerator,
+						stepsPerBeat: lastDenominator
 					});
 				}
-				lastBeat = activeSignature.beat;
+				lastBeat = curSignature.beat;
 				nextSignature ++;
 			}
 			time += ((change.beat - lastBeat) / lastBPM) * 60000 * (4 / lastDenominator);
@@ -127,10 +129,11 @@ class StepManiaShark extends StepManiaBasic<SSCFormat>
 			bpmChanges.push({
 				time: time,
 				bpm: lastBPM,
-				beatsPerMeasure: activeSignature?.numerator ?? 4,
-				stepsPerBeat: activeSignature?.denominator ?? 4
+				beatsPerMeasure: lastNumerator,
+				stepsPerBeat: lastDenominator
 			});
 		}
+		// Push missing time signature changes
 		if (nextSignature < timeSignatures.length) {
 			for (i in nextSignature...timeSignatures.length) {
 				var change = timeSignatures[i];
