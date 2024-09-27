@@ -101,7 +101,7 @@ class StepManiaSharkParser extends BasicStepManiaParser<SSCFormat>
 			case 'NOTES' | 'NOTES2':
 				parseState = SONG_INFO;
 				readNoteData(currentMapData, value); // Load in note data!!
-				formatted.NOTES.set(currentMapData.diff, currentMapData);
+				formatted.NOTES.set(currentMapData.diff.toLowerCase(), currentMapData);
 			default:
 				// TODO: Store chart-based warps, stops, etc!!
 		}

@@ -172,7 +172,7 @@ class BasicStepManiaParser<T:StepManiaFormat> extends BasicParser<T>
 		final params:Array<String> = msdFile.values[idx];
 		currentMapData.dance = params[1].trim();
 		currentMapData.charter = params[2].trim();
-		currentMapData.diff = params[3].trim();
+		currentMapData.diff = params[3].trim().toLowerCase();
 		currentMapData.meter = Std.parseInt(params[4].trim());
 		currentMapData.radar = params[5].trim().split(",").map(Std.parseFloat);
 
