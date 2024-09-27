@@ -110,8 +110,8 @@ class Timing
 
 	public static function divideNotesToMeasures(notes:Array<BasicNote>, events:Array<BasicEvent>, bpmChanges:Array<BasicBPMChange>):Array<BasicMeasure>
 	{
-		sortNotes(notes.copy());
-		sortEvents(events.copy());
+		sortNotes(notes);
+		sortEvents(events);
 		bpmChanges = sortBPMChanges(bpmChanges.copy());
 
 		// BPM setup crap
@@ -126,8 +126,10 @@ class Timing
 		var lastChange:BasicBPMChange = bpmChanges.shift();
 		var nextMeasure:Float = measureCrochet(lastChange.bpm, lastChange.beatsPerMeasure);
 		var lastMeasure:Float = 0;
-
-		while (notes.length > 0 || events.length > 0) {
+		var eventIndex:Int = 0;
+		var noteIndex:Int = 0;
+		
+		while (noteIndex < notes.length || eventIndex < events.length) {
 			while (bpmChanges.length > 0 && nextMeasure >= bpmChanges[0].time) {
 				var newChange:BasicBPMChange = bpmChanges.shift();
 				var measureDiff:Float = newChange.time - nextMeasure;
@@ -138,8 +140,8 @@ class Timing
 			var measureNotes:Array<BasicNote> = [];
 			var measureEvents:Array<BasicEvent> = [];
 			var measureDuration:Float = nextMeasure - lastMeasure;
-			while (notes.length > 0 && notes[0].time < nextMeasure) measureNotes.push(notes.shift());
-			while (events.length > 0 && events[0].time < nextMeasure) measureEvents.push(events.shift());
+			while (noteIndex < notes.length && notes[noteIndex].time < nextMeasure) measureNotes.push(notes[noteIndex++]);
+			while (eventIndex < events.length && events[eventIndex].time < nextMeasure) measureEvents.push(events[eventIndex++]);
 			final measure:BasicMeasure = {
 				notes: measureNotes,
 				events: measureEvents,
